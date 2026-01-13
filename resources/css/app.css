@@ -1,0 +1,42 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer components {
+    .check-input {
+        @apply relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-md border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2;
+    }
+    
+    /* Styles pour vue-select */
+    .v-select {
+        @apply mt-1;
+    }
+    
+    .v-select .vs__dropdown-toggle {
+        @apply rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 min-h-[38px];
+    }
+    
+    .v-select .vs__search::placeholder {
+        @apply text-gray-400;
+    }
+    
+    .v-select .vs__selected {
+        @apply text-gray-900;
+    }
+    
+    .v-select .vs__dropdown-menu {
+        @apply border-gray-300 shadow-lg rounded-md;
+    }
+    
+    .v-select .vs__dropdown-option {
+        @apply text-gray-900;
+    }
+    
+    .v-select .vs__dropdown-option--highlight {
+        @apply bg-indigo-600 text-white;
+    }
+    
+    .v-select.vs--open .vs__dropdown-toggle {
+        @apply border-indigo-500 ring-1 ring-indigo-500;
+    }
+}
