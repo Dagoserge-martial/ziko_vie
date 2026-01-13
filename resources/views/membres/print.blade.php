@@ -132,9 +132,9 @@
 
     <div class="header">
         <div class="header-title">
-            <span class="heart">❤</span>
+            <span class="heart">💊💊❤️ </span>
             {{ $titre }}
-            <span class="heart">❤</span>
+            <span class="heart">❤️💊💊</span>
         </div>
         @if(isset($filters['localite']))
             <div class="header-subtitle" style="text-align: center; font-size: 14px; color: #666; margin-top: 10px;">

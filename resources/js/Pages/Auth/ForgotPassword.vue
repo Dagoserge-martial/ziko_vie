@@ -26,17 +26,16 @@ const submit = () => {
         <Head title="Mot de passe oublié" />
 
         <div class="mb-4 text-sm text-gray-600">
-            Mot de passe oublié ? Indiquez votre adresse e-mail et nous réinitialiserons
-            votre mot de passe avec le mot de passe par défaut "zikobouevie".
+            Mot de passe oublié ? Aucun problème. Indiquez-nous votre adresse e-mail
+            et nous vous enverrons un lien de réinitialisation qui vous permettra
+            de choisir un nouveau mot de passe.
         </div>
 
         <div
             v-if="status"
-            class="mb-4 p-4 bg-green-50 border border-green-200 rounded-md"
+            class="mb-4 text-sm font-medium text-green-600"
         >
-            <p class="text-sm font-medium text-green-800">
-                {{ status }}
-            </p>
+            {{ status }}
         </div>
 
         <form @submit.prevent="submit">
@@ -68,7 +67,7 @@ const submit = () => {
                     :class="{ 'opacity-25': form.processing }"
                     :disabled="form.processing"
                 >
-                    Réinitialiser le mot de passe
+                    Envoyer le lien de réinitialisation
                 </PrimaryButton>
             </div>
         </form>
