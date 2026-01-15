@@ -86,6 +86,13 @@ const closeMenu = () => {
                                 >
                                     Dépenses
                                 </NavLink>
+                                <NavLink
+                                    v-if="$page.props.auth.user?.isAdmin"
+                                    :href="route('parametres.index')"
+                                    :active="route().current('parametres.*')"
+                                >
+                                    Paramètres
+                                </NavLink>
                             </div>
                         </div>
 
@@ -251,6 +258,14 @@ const closeMenu = () => {
                                     :active="route().current('depenses-medicales.*')"
                                 >
                                     Dépenses
+                                </ResponsiveNavLink>
+                            </div>
+                            <div v-if="$page.props.auth.user?.isAdmin" @click="closeMenu">
+                                <ResponsiveNavLink
+                                    :href="route('parametres.index')"
+                                    :active="route().current('parametres.*')"
+                                >
+                                    Paramètres
                                 </ResponsiveNavLink>
                             </div>
                         </div>

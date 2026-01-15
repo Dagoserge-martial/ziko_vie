@@ -131,4 +131,46 @@ class User extends Authenticatable
         // Sinon, utiliser l'email comme nom
         return $this->email;
     }
+
+    /**
+     * Vérifier si l'utilisateur est administrateur
+     */
+    public function isAdmin(): bool
+    {
+        if (!$this->role) {
+            return false;
+        }
+
+        return $this->role->slug === 'admin' || 
+               in_array('admin', $this->role->permissions ?? []);
+    }
+
+    /**
+     * Vérifier si l'utilisateur a une permission spécifique
+     */
+    public function hasPermission(string $permission): bool
+    {
+        if ($this->isAdmin()) {
+            return true; // Les admins ont toutes les permissions
+        }
+
+        if (!$this->role || !$this->role->actif) {
+            return false;
+        }
+
+        $permissions = $this->role->permissions ?? [];
+        return in_array($permission, $permissions);
+    }
+
+    /**
+     * Vérifier si l'utilisateur a un rôle spécifique
+     */
+    public function hasRole(string $roleSlug): bool
+    {
+        if (!$this->role) {
+            return false;
+        }
+
+        return $this->role->slug === $roleSlug;
+    }
 }

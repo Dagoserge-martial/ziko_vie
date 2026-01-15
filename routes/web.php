@@ -19,6 +19,8 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DepenseMedicaleController;
 use App\Http\Controllers\ExpenseAttachmentController;
 use App\Http\Controllers\MembreController;
+use App\Http\Controllers\RoleController;
+use App\Http\Controllers\UserRoleController;
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
@@ -51,6 +53,21 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+
+    // Paramètres routes (réservées aux admins)
+    Route::middleware('admin')->prefix('parametres')->name('parametres.')->group(function () {
+        Route::get('/', function () {
+            return Inertia::render('Parametres/Index');
+        })->name('index');
+        
+        // Rôles
+        Route::resource('roles', RoleController::class);
+        
+        // Utilisateurs et assignation de rôles
+        Route::get('/users', [UserRoleController::class, 'index'])->name('users.index');
+        Route::post('/users/{user}/assign-role', [UserRoleController::class, 'assignRole'])->name('users.assign-role');
+        Route::post('/users/{user}/toggle-block', [UserRoleController::class, 'toggleBlock'])->name('users.toggle-block');
+    });
 });
 
 require __DIR__.'/auth.php';
