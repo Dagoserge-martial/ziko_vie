@@ -15,7 +15,7 @@ class UserRoleController extends Controller
      */
     public function index(): Response
     {
-        $users = User::with(['role', 'membre'])
+        $users = User::with(['roles', 'role', 'membre'])
             ->orderBy('email')
             ->get()
             ->map(function ($user) {
@@ -23,8 +23,9 @@ class UserRoleController extends Controller
                     'id' => $user->id,
                     'email' => $user->email,
                     'name' => $user->name,
-                    'role_id' => $user->role_id,
-                    'role_nom' => $user->role ? $user->role->nom : 'Aucun rôle',
+                    'role_ids' => $user->roles->pluck('id')->toArray(),
+                    'role_id' => $user->role_id, // Pour compatibilité
+                    'role_nom' => $user->roles->pluck('nom')->join(', ') ?: ($user->role ? $user->role->nom : 'Aucun rôle'),
                     'est_bloque' => $user->est_bloque,
                     'membre_id' => $user->membre ? $user->membre->id : null,
                 ];
@@ -41,21 +42,23 @@ class UserRoleController extends Controller
     }
 
     /**
-     * Assigner un rôle à un utilisateur
+     * Assigner des rôles à un utilisateur
      */
     public function assignRole(Request $request, User $user)
     {
         $validated = $request->validate([
-            'role_id' => 'nullable|exists:roles,id',
+            'role_ids' => 'nullable|array',
+            'role_ids.*' => 'exists:roles,id',
         ]);
 
-        $user->update([
-            'role_id' => $validated['role_id'] ?? null,
-        ]);
+        $roleIds = $validated['role_ids'] ?? [];
+        
+        // Synchroniser les rôles (many-to-many)
+        $user->roles()->sync($roleIds);
 
         return redirect()
-            ->route('users.index')
-            ->with('success', 'Le rôle a été assigné avec succès.');
+            ->route('parametres.users.index')
+            ->with('success', 'Les rôles ont été assignés avec succès.');
     }
 
     /**
@@ -72,7 +75,7 @@ class UserRoleController extends Controller
             : 'L\'utilisateur a été débloqué avec succès.';
 
         return redirect()
-            ->route('users.index')
+            ->route('parametres.users.index')
             ->with('success', $message);
     }
 }

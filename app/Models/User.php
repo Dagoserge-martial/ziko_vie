@@ -5,6 +5,7 @@ namespace App\Models;
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -111,6 +112,14 @@ class User extends Authenticatable
         }
     }
 
+    // Relation many-to-many avec les rôles
+    public function roles(): BelongsToMany
+    {
+        return $this->belongsToMany(Role::class, 'role_utilisateur', 'utilisateur_id', 'role_id')
+            ->withTimestamps();
+    }
+
+    // Relation BelongsTo pour compatibilité rétroactive (ancien système role_id)
     public function role(): BelongsTo
     {
         return $this->belongsTo(Role::class, 'role_id');
@@ -137,12 +146,26 @@ class User extends Authenticatable
      */
     public function isAdmin(): bool
     {
-        if (!$this->role) {
-            return false;
+        // Vérifier dans la relation many-to-many
+        $hasAdminRole = $this->roles()->where('slug', 'admin')->exists();
+        if ($hasAdminRole) {
+            return true;
         }
 
-        return $this->role->slug === 'admin' || 
-               in_array('admin', $this->role->permissions ?? []);
+        // Compatibilité avec l'ancien système role_id
+        if ($this->role && $this->role->slug === 'admin') {
+            return true;
+        }
+
+        // Vérifier les permissions admin dans tous les rôles
+        $hasAdminPermission = $this->roles()
+            ->where('actif', true)
+            ->get()
+            ->contains(function ($role) {
+                return in_array('admin', $role->permissions ?? []);
+            });
+
+        return $hasAdminPermission || ($this->role && in_array('admin', $this->role->permissions ?? []));
     }
 
     /**
@@ -154,12 +177,20 @@ class User extends Authenticatable
             return true; // Les admins ont toutes les permissions
         }
 
-        if (!$this->role || !$this->role->actif) {
-            return false;
-        }
+        // Vérifier dans tous les rôles many-to-many
+        $hasPermissionInRoles = $this->roles()
+            ->where('actif', true)
+            ->get()
+            ->contains(function ($role) use ($permission) {
+                return in_array($permission, $role->permissions ?? []);
+            });
 
-        $permissions = $this->role->permissions ?? [];
-        return in_array($permission, $permissions);
+        // Compatibilité avec l'ancien système role_id
+        $hasPermissionInSingleRole = $this->role && 
+            $this->role->actif && 
+            in_array($permission, $this->role->permissions ?? []);
+
+        return $hasPermissionInRoles || $hasPermissionInSingleRole;
     }
 
     /**
@@ -167,10 +198,12 @@ class User extends Authenticatable
      */
     public function hasRole(string $roleSlug): bool
     {
-        if (!$this->role) {
-            return false;
-        }
+        // Vérifier dans la relation many-to-many
+        $hasRoleInManyToMany = $this->roles()->where('slug', $roleSlug)->exists();
+        
+        // Compatibilité avec l'ancien système role_id
+        $hasRoleInSingle = $this->role && $this->role->slug === $roleSlug;
 
-        return $this->role->slug === $roleSlug;
+        return $hasRoleInManyToMany || $hasRoleInSingle;
     }
 }

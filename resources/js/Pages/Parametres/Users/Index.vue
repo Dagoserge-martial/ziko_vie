@@ -1,9 +1,10 @@
 <script setup>
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import { Head, router, useForm } from '@inertiajs/vue3';
-import { ref } from 'vue';
+import { ref, watch } from 'vue';
 import PrimaryButton from '@/Components/PrimaryButton.vue';
 import DangerButton from '@/Components/DangerButton.vue';
+import Checkbox from '@/Components/Checkbox.vue';
 import Swal from 'sweetalert2';
 
 const props = defineProps({
@@ -11,20 +12,61 @@ const props = defineProps({
     roles: Array,
 });
 
-const assignRole = (user, roleId) => {
+// Stocker les rôles sélectionnés pour chaque utilisateur
+const userRoles = ref({});
+
+// Fonction pour initialiser les rôles
+const initializeUserRoles = () => {
+    props.users.forEach(user => {
+        userRoles.value[user.id] = [...(user.role_ids || [])];
+    });
+};
+
+// Initialiser les rôles au chargement
+initializeUserRoles();
+
+// Surveiller les changements de users pour mettre à jour les rôles
+watch(() => props.users, () => {
+    initializeUserRoles();
+}, { deep: true });
+
+const toggleRole = (user, roleId) => {
+    if (!userRoles.value[user.id]) {
+        userRoles.value[user.id] = [];
+    }
+    
+    // Sauvegarder l'état actuel avant modification
+    const previousRoles = [...userRoles.value[user.id]];
+    
+    const roleIndex = userRoles.value[user.id].indexOf(roleId);
+    if (roleIndex > -1) {
+        // Retirer le rôle
+        userRoles.value[user.id].splice(roleIndex, 1);
+    } else {
+        // Ajouter le rôle
+        userRoles.value[user.id].push(roleId);
+    }
+    
+    // Envoyer la mise à jour au serveur
     router.post(
         route('parametres.users.assign-role', user.id),
-        { role_id: roleId },
+        { role_ids: userRoles.value[user.id] },
         {
             preserveScroll: true,
             onSuccess: () => {
-                Swal.fire('Succès', 'Le rôle a été assigné avec succès.', 'success');
+                Swal.fire('Succès', 'Les rôles ont été mis à jour avec succès.', 'success');
             },
             onError: () => {
                 Swal.fire('Erreur', 'Une erreur est survenue.', 'error');
+                // Restaurer les rôles précédents en cas d'erreur
+                userRoles.value[user.id] = previousRoles;
             },
         }
     );
+};
+
+const isRoleSelected = (user, roleId) => {
+    return userRoles.value[user.id]?.includes(roleId) || false;
 };
 
 const toggleBlock = (user) => {
@@ -77,7 +119,7 @@ const toggleBlock = (user) => {
                                     Utilisateur
                                 </th>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Rôle
+                                    Rôles
                                 </th>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                     Statut
@@ -97,21 +139,30 @@ const toggleBlock = (user) => {
                                         {{ user.email }}
                                     </div>
                                 </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <select
-                                        :value="user.role_id || ''"
-                                        @change="assignRole(user, $event.target.value)"
-                                        class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                                    >
-                                        <option value="">Aucun rôle</option>
-                                        <option
+                                <td class="px-6 py-4">
+                                    <div class="space-y-2 max-h-48 overflow-y-auto border border-gray-200 rounded-lg p-3">
+                                        <div
                                             v-for="role in roles"
                                             :key="role.id"
-                                            :value="role.id"
+                                            class="flex items-center"
                                         >
-                                            {{ role.nom }}
-                                        </option>
-                                    </select>
+                                            <Checkbox
+                                                :id="`user-${user.id}-role-${role.id}`"
+                                                :checked="isRoleSelected(user, role.id)"
+                                                @update:checked="() => toggleRole(user, role.id)"
+                                            />
+                                            <label
+                                                :for="`user-${user.id}-role-${role.id}`"
+                                                class="ms-2 text-sm text-gray-700 cursor-pointer"
+                                                @click="toggleRole(user, role.id)"
+                                            >
+                                                {{ role.nom }}
+                                            </label>
+                                        </div>
+                                        <div v-if="roles.length === 0" class="text-sm text-gray-500 italic">
+                                            Aucun rôle disponible
+                                        </div>
+                                    </div>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     <span

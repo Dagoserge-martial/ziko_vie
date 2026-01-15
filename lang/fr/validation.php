@@ -158,6 +158,7 @@ return [
 
     'attributes' => [
         'email' => 'adresse e-mail',
+        'name' => 'nom',
         'password' => 'mot de passe',
     ],
 
