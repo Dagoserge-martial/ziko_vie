@@ -63,31 +63,35 @@ const closeMenu = () => {
                                 class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex"
                             >
                                 <NavLink
+                                    v-if="$page.props.auth.user?.permissions?.['dashboard.view'] || $page.props.auth.user?.isAdmin"
                                     :href="route('dashboard')"
                                     :active="route().current('dashboard')"
                                 >
                                     Tableau de bord
                                 </NavLink>
                                 <NavLink
+                                    v-if="$page.props.auth.user?.permissions?.['membres.view'] || $page.props.auth.user?.isAdmin"
                                     :href="route('membres.index')"
                                     :active="route().current('membres.*')"
                                 >
                                     Membres
                                 </NavLink>
                                 <NavLink
+                                    v-if="$page.props.auth.user?.permissions?.['cotisations.view'] || $page.props.auth.user?.isAdmin"
                                     :href="route('cotisations.index')"
                                     :active="route().current('cotisations.*')"
                                 >
                                     Cotisations
                                 </NavLink>
                                 <NavLink
+                                    v-if="$page.props.auth.user?.permissions?.['depenses.view'] || $page.props.auth.user?.isAdmin"
                                     :href="route('depenses-medicales.index')"
                                     :active="route().current('depenses-medicales.*')"
                                 >
                                     Dépenses
                                 </NavLink>
                                 <NavLink
-                                    v-if="$page.props.auth.user?.isAdmin"
+                                    v-if="$page.props.auth.user?.permissions?.['parametres.view'] || $page.props.auth.user?.isAdmin"
                                     :href="route('parametres.index')"
                                     :active="route().current('parametres.*')"
                                 >
@@ -228,7 +232,7 @@ const closeMenu = () => {
 
                     <div class="overflow-y-auto" style="height: calc(100% - 4rem);">
                         <div class="space-y-1 px-2 py-4">
-                            <div @click="closeMenu">
+                            <div v-if="$page.props.auth.user?.permissions?.['dashboard.view'] || $page.props.auth.user?.isAdmin" @click="closeMenu">
                                 <ResponsiveNavLink
                                     :href="route('dashboard')"
                                     :active="route().current('dashboard')"
@@ -236,7 +240,7 @@ const closeMenu = () => {
                                     Tableau de bord
                                 </ResponsiveNavLink>
                             </div>
-                            <div @click="closeMenu">
+                            <div v-if="$page.props.auth.user?.permissions?.['membres.view'] || $page.props.auth.user?.isAdmin" @click="closeMenu">
                                 <ResponsiveNavLink
                                     :href="route('membres.index')"
                                     :active="route().current('membres.*')"
@@ -244,7 +248,7 @@ const closeMenu = () => {
                                     Membres
                                 </ResponsiveNavLink>
                             </div>
-                            <div @click="closeMenu">
+                            <div v-if="$page.props.auth.user?.permissions?.['cotisations.view'] || $page.props.auth.user?.isAdmin" @click="closeMenu">
                                 <ResponsiveNavLink
                                     :href="route('cotisations.index')"
                                     :active="route().current('cotisations.*')"
@@ -252,7 +256,7 @@ const closeMenu = () => {
                                     Cotisations
                                 </ResponsiveNavLink>
                             </div>
-                            <div @click="closeMenu">
+                            <div v-if="$page.props.auth.user?.permissions?.['depenses.view'] || $page.props.auth.user?.isAdmin" @click="closeMenu">
                                 <ResponsiveNavLink
                                     :href="route('depenses-medicales.index')"
                                     :active="route().current('depenses-medicales.*')"
@@ -260,7 +264,7 @@ const closeMenu = () => {
                                     Dépenses
                                 </ResponsiveNavLink>
                             </div>
-                            <div v-if="$page.props.auth.user?.isAdmin" @click="closeMenu">
+                            <div v-if="$page.props.auth.user?.permissions?.['parametres.view'] || $page.props.auth.user?.isAdmin" @click="closeMenu">
                                 <ResponsiveNavLink
                                     :href="route('parametres.index')"
                                     :active="route().current('parametres.*')"

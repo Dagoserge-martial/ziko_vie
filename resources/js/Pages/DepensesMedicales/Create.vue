@@ -8,6 +8,7 @@ import TextInput from '@/Components/TextInput.vue';
 import InputLabel from '@/Components/InputLabel.vue';
 import InputError from '@/Components/InputError.vue';
 import Textarea from '@/Components/Textarea.vue';
+import MultiSelect from '@/Components/MultiSelect.vue';
 import { showValidationErrors, showSuccess, validateRequired } from '@/plugins/sweetalert';
 
 export default {
@@ -21,6 +22,7 @@ export default {
         InputLabel,
         InputError,
         Textarea,
+        MultiSelect,
         vSelect: window["vue-select"],
     },
     props: {
@@ -135,21 +137,18 @@ export default {
                             <!-- Membre -->
                             <div>
                                 <InputLabel for="membre_id" value="Membre *" />
-                                <select
+                                <MultiSelect
                                     id="membre_id"
-                                    v-model="form.membre_id"
-                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                                    required
-                                >
-                                    <option value="">Sélectionner un membre</option>
-                                    <option
-                                        v-for="membre in membres"
-                                        :key="membre.id"
-                                        :value="membre.id"
-                                    >
-                                        {{ membre.prenom }} {{ membre.nom }}
-                                    </option>
-                                </select>
+                                    :model-value="form.membre_id"
+                                    @update:model-value="form.membre_id = $event"
+                                    :options="membres"
+                                    option-label="prenom"
+                                    option-value="id"
+                                    placeholder="Sélectionner un membre..."
+                                    search-placeholder="Rechercher un membre..."
+                                    max-height="250px"
+                                    :multiple="false"
+                                />
                                 <InputError class="mt-2" :message="form.errors.membre_id" />
                             </div>
 
@@ -228,21 +227,18 @@ export default {
                             <!-- Nom de la personne déléguée -->
                             <div>
                                 <InputLabel for="nom_delegue" value="Personne déléguée" />
-                                <select
+                                <MultiSelect
                                     id="nom_delegue"
-                                    v-model="delegueId"
-                                    @change="updateNomDelegue"
-                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                                >
-                                    <option value="">Sélectionner une personne déléguée</option>
-                                    <option
-                                        v-for="membre in membres"
-                                        :key="membre.id"
-                                        :value="membre.id"
-                                    >
-                                        {{ membre.prenom }} {{ membre.nom }}
-                                    </option>
-                                </select>
+                                    :model-value="delegueId"
+                                    @update:model-value="delegueId = $event; updateNomDelegue()"
+                                    :options="membres"
+                                    option-label="prenom"
+                                    option-value="id"
+                                    placeholder="Sélectionner une personne déléguée..."
+                                    search-placeholder="Rechercher un membre..."
+                                    max-height="250px"
+                                    :multiple="false"
+                                />
                                 <InputError class="mt-2" :message="form.errors.nom_delegue" />
                             </div>
 

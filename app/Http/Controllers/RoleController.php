@@ -47,11 +47,12 @@ class RoleController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index(): Response
+    public function index(Request $request): Response
     {
         $roles = Role::withCount('utilisateurs')
             ->orderBy('nom')
-            ->get();
+            ->paginate(15)
+            ->withQueryString();
 
         return Inertia::render('Parametres/Roles/Index', [
             'roles' => $roles,
@@ -90,7 +91,7 @@ class RoleController extends Controller
         ]);
 
         return redirect()
-            ->route('roles.index')
+            ->route('parametres.roles.index')
             ->with('success', 'Le rôle a été créé avec succès.');
     }
 
@@ -140,7 +141,7 @@ class RoleController extends Controller
         ]);
 
         return redirect()
-            ->route('roles.index')
+            ->route('parametres.roles.index')
             ->with('success', 'Le rôle a été modifié avec succès.');
     }
 
@@ -152,21 +153,21 @@ class RoleController extends Controller
         // Vérifier si le rôle est utilisé
         if ($role->utilisateurs()->count() > 0) {
             return redirect()
-                ->route('roles.index')
+                ->route('parametres.roles.index')
                 ->with('error', 'Ce rôle ne peut pas être supprimé car il est assigné à des utilisateurs.');
         }
 
         // Empêcher la suppression du rôle admin
         if ($role->slug === 'admin') {
             return redirect()
-                ->route('roles.index')
+                ->route('parametres.roles.index')
                 ->with('error', 'Le rôle administrateur ne peut pas être supprimé.');
         }
 
         $role->delete();
 
         return redirect()
-            ->route('roles.index')
+            ->route('parametres.roles.index')
             ->with('success', 'Le rôle a été supprimé avec succès.');
     }
 }

@@ -1,14 +1,14 @@
 <script setup>
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
-import { Head, router, useForm } from '@inertiajs/vue3';
+import { Head, Link, router, useForm } from '@inertiajs/vue3';
 import { ref, watch } from 'vue';
 import PrimaryButton from '@/Components/PrimaryButton.vue';
 import DangerButton from '@/Components/DangerButton.vue';
-import Checkbox from '@/Components/Checkbox.vue';
+import MultiSelect from '@/Components/MultiSelect.vue';
 import Swal from 'sweetalert2';
 
 const props = defineProps({
-    users: Array,
+    users: Object,
     roles: Array,
 });
 
@@ -17,9 +17,11 @@ const userRoles = ref({});
 
 // Fonction pour initialiser les rôles
 const initializeUserRoles = () => {
-    props.users.forEach(user => {
-        userRoles.value[user.id] = [...(user.role_ids || [])];
-    });
+    if (props.users && props.users.data) {
+        props.users.data.forEach(user => {
+            userRoles.value[user.id] = [...(user.role_ids || [])];
+        });
+    }
 };
 
 // Initialiser les rôles au chargement
@@ -30,27 +32,17 @@ watch(() => props.users, () => {
     initializeUserRoles();
 }, { deep: true });
 
-const toggleRole = (user, roleId) => {
-    if (!userRoles.value[user.id]) {
-        userRoles.value[user.id] = [];
-    }
-    
+const updateUserRoles = (user, selectedRoleIds) => {
     // Sauvegarder l'état actuel avant modification
-    const previousRoles = [...userRoles.value[user.id]];
+    const previousRoles = [...(userRoles.value[user.id] || [])];
     
-    const roleIndex = userRoles.value[user.id].indexOf(roleId);
-    if (roleIndex > -1) {
-        // Retirer le rôle
-        userRoles.value[user.id].splice(roleIndex, 1);
-    } else {
-        // Ajouter le rôle
-        userRoles.value[user.id].push(roleId);
-    }
+    // Mettre à jour les rôles
+    userRoles.value[user.id] = selectedRoleIds;
     
     // Envoyer la mise à jour au serveur
     router.post(
         route('parametres.users.assign-role', user.id),
-        { role_ids: userRoles.value[user.id] },
+        { role_ids: selectedRoleIds },
         {
             preserveScroll: true,
             onSuccess: () => {
@@ -63,10 +55,6 @@ const toggleRole = (user, roleId) => {
             },
         }
     );
-};
-
-const isRoleSelected = (user, roleId) => {
-    return userRoles.value[user.id]?.includes(roleId) || false;
 };
 
 const toggleBlock = (user) => {
@@ -130,7 +118,7 @@ const toggleBlock = (user) => {
                             </tr>
                         </thead>
                         <tbody class="bg-white divide-y divide-gray-200">
-                            <tr v-for="user in users" :key="user.id">
+                            <tr v-for="user in users.data" :key="user.id">
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     <div class="text-sm font-medium text-gray-900">
                                         {{ user.name }}
@@ -140,29 +128,17 @@ const toggleBlock = (user) => {
                                     </div>
                                 </td>
                                 <td class="px-6 py-4">
-                                    <div class="space-y-2 max-h-48 overflow-y-auto border border-gray-200 rounded-lg p-3">
-                                        <div
-                                            v-for="role in roles"
-                                            :key="role.id"
-                                            class="flex items-center"
-                                        >
-                                            <Checkbox
-                                                :id="`user-${user.id}-role-${role.id}`"
-                                                :checked="isRoleSelected(user, role.id)"
-                                                @update:checked="() => toggleRole(user, role.id)"
-                                            />
-                                            <label
-                                                :for="`user-${user.id}-role-${role.id}`"
-                                                class="ms-2 text-sm text-gray-700 cursor-pointer"
-                                                @click="toggleRole(user, role.id)"
-                                            >
-                                                {{ role.nom }}
-                                            </label>
-                                        </div>
-                                        <div v-if="roles.length === 0" class="text-sm text-gray-500 italic">
-                                            Aucun rôle disponible
-                                        </div>
-                                    </div>
+                                    <MultiSelect
+                                        :model-value="userRoles[user.id] || []"
+                                        @update:model-value="(value) => updateUserRoles(user, value)"
+                                        :options="roles"
+                                        option-label="nom"
+                                        option-value="id"
+                                        placeholder="Sélectionner des rôles..."
+                                        search-placeholder="Rechercher un rôle..."
+                                        max-height="250px"
+                                        :multiple="true"
+                                    />
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     <span
@@ -184,13 +160,72 @@ const toggleBlock = (user) => {
                                     </DangerButton>
                                 </td>
                             </tr>
-                            <tr v-if="users.length === 0">
+                            <tr v-if="!users.data || users.data.length === 0">
                                 <td colspan="4" class="px-6 py-4 text-center text-sm text-gray-500">
                                     Aucun utilisateur trouvé
                                 </td>
                             </tr>
                         </tbody>
                     </table>
+
+                    <!-- Pagination -->
+                    <div v-if="users && users.links && users.links.length > 1" class="bg-white px-4 py-3 border-t border-gray-200 sm:px-6">
+                        <div class="flex items-center justify-between">
+                            <!-- Pagination mobile -->
+                            <div class="flex-1 flex justify-between sm:hidden">
+                                <Link
+                                    v-if="users.links && users.links[0] && users.links[0].url"
+                                    :href="users.links[0].url"
+                                    class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+                                >
+                                    Précédent
+                                </Link>
+                                <span v-else class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-300 bg-white cursor-not-allowed">
+                                    Précédent
+                                </span>
+                                <Link
+                                    v-if="users.links && users.links.length > 0 && users.links[users.links.length - 1] && users.links[users.links.length - 1].url"
+                                    :href="users.links[users.links.length - 1].url"
+                                    class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+                                >
+                                    Suivant
+                                </Link>
+                                <span v-else class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-300 bg-white cursor-not-allowed">
+                                    Suivant
+                                </span>
+                            </div>
+                            <!-- Pagination desktop -->
+                            <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+                                <div>
+                                    <p class="text-sm text-gray-700">
+                                        Affichage de
+                                        <span class="font-medium">{{ users.from || 0 }}</span>
+                                        à
+                                        <span class="font-medium">{{ users.to || 0 }}</span>
+                                        sur
+                                        <span class="font-medium">{{ users.total || 0 }}</span>
+                                        résultats
+                                    </p>
+                                </div>
+                                <div v-if="users.links && users.links.length > 0">
+                                    <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                                        <Link
+                                            v-for="(link, index) in users.links"
+                                            :key="index"
+                                            :href="link.url || '#'"
+                                            :class="{
+                                                'bg-indigo-50 border-indigo-500 text-indigo-600 z-10': link.active,
+                                                'bg-white border-gray-300 text-gray-500 hover:bg-gray-50': !link.active && link.url,
+                                                'bg-gray-100 border-gray-300 text-gray-400 cursor-not-allowed pointer-events-none': !link.url,
+                                            }"
+                                            class="relative inline-flex items-center px-4 py-2 border text-sm font-medium"
+                                            v-html="link.label"
+                                        />
+                                    </nav>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

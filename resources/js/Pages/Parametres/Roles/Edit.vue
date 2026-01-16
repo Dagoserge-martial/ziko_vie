@@ -9,6 +9,7 @@ import InputLabel from '@/Components/InputLabel.vue';
 import InputError from '@/Components/InputError.vue';
 import Textarea from '@/Components/Textarea.vue';
 import Checkbox from '@/Components/Checkbox.vue';
+import MultiSelect from '@/Components/MultiSelect.vue';
 
 const props = defineProps({
     role: Object,
@@ -22,53 +23,23 @@ const form = useForm({
     actif: props.role.actif ?? true,
 });
 
-const selectedPermissions = ref({});
+// Convertir les permissions en tableau pour le MultiSelect
+const permissionsList = computed(() => {
+    const perms = props.permissions || {};
+    return Object.keys(perms).map(key => ({
+        id: key,
+        nom: perms[key],
+    }));
+});
 
 onMounted(() => {
     // Initialiser les permissions sélectionnées
-    if (props.role.permissions) {
-        props.role.permissions.forEach((permission) => {
-            selectedPermissions.value[permission] = true;
-        });
+    if (props.role.permissions && Array.isArray(props.role.permissions)) {
+        form.permissions = props.role.permissions;
+    } else {
+        form.permissions = [];
     }
 });
-
-const togglePermission = (permission) => {
-    const currentValue = selectedPermissions.value[permission];
-    if (currentValue) {
-        const newSelected = { ...selectedPermissions.value };
-        delete newSelected[permission];
-        selectedPermissions.value = newSelected;
-    } else {
-        selectedPermissions.value = {
-            ...selectedPermissions.value,
-            [permission]: true,
-        };
-    }
-    form.permissions = Object.keys(selectedPermissions.value);
-};
-
-const allSelected = computed(() => {
-    const perms = props.permissions || {};
-    return Object.keys(perms).length > 0 && 
-           Object.keys(perms).every(perm => selectedPermissions.value[perm]);
-});
-
-const toggleAllPermissions = () => {
-    if (allSelected.value) {
-        // Tout décocher
-        selectedPermissions.value = {};
-    } else {
-        // Tout cocher
-        const allPerms = {};
-        const perms = props.permissions || {};
-        Object.keys(perms).forEach(perm => {
-            allPerms[perm] = true;
-        });
-        selectedPermissions.value = allPerms;
-    }
-    form.permissions = Object.keys(selectedPermissions.value);
-};
 
 const submit = () => {
     form.put(route('parametres.roles.update', props.role.id), {
@@ -125,42 +96,19 @@ const submit = () => {
 
                             <!-- Permissions -->
                             <div>
-                                <div class="flex items-center justify-between mb-2">
-                                    <InputLabel value="Permissions" />
-                                    <button
-                                        type="button"
-                                        @click="toggleAllPermissions"
-                                        class="text-sm text-indigo-600 hover:text-indigo-800 font-medium"
-                                    >
-                                        {{ allSelected ? 'Tout décocher' : 'Tout cocher' }}
-                                    </button>
-                                </div>
-                                <div class="mt-2 space-y-2 max-h-96 overflow-y-auto border border-gray-200 rounded-lg p-4">
-                                    <div
-                                        v-for="(label, permission) in props.permissions"
-                                        :key="permission"
-                                        class="flex items-center p-2 rounded transition-colors"
-                                        :class="{
-                                            'bg-gray-50 border border-gray-300': !selectedPermissions[permission],
-                                            'bg-white': selectedPermissions[permission]
-                                        }"
-                                    >
-                                        <div class="relative flex-shrink-0" :class="{ 'border-2 border-gray-400 rounded p-0.5': !selectedPermissions[permission] }">
-                                            <Checkbox
-                                                :id="`permission-${permission}`"
-                                                :checked="!!selectedPermissions[permission]"
-                                                @update:checked="() => togglePermission(permission)"
-                                            />
-                                        </div>
-                                        <label
-                                            :for="`permission-${permission}`"
-                                            class="ms-2 text-sm text-gray-700 cursor-pointer flex-1"
-                                            @click="togglePermission(permission)"
-                                        >
-                                            {{ label }}
-                                        </label>
-                                    </div>
-                                </div>
+                                <InputLabel for="permissions" value="Permissions" />
+                                <MultiSelect
+                                    id="permissions"
+                                    :model-value="form.permissions"
+                                    @update:model-value="form.permissions = $event"
+                                    :options="permissionsList"
+                                    option-label="nom"
+                                    option-value="id"
+                                    placeholder="Sélectionner des permissions..."
+                                    search-placeholder="Rechercher une permission..."
+                                    max-height="250px"
+                                    :multiple="true"
+                                />
                                 <InputError class="mt-2" :message="form.errors.permissions" />
                             </div>
 

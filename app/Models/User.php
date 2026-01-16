@@ -146,10 +146,42 @@ class User extends Authenticatable
      */
     public function isAdmin(): bool
     {
-        // Vérifier dans la relation many-to-many
-        $hasAdminRole = $this->roles()->where('slug', 'admin')->exists();
-        if ($hasAdminRole) {
-            return true;
+        // Si la relation roles est déjà chargée, l'utiliser directement
+        if ($this->relationLoaded('roles')) {
+            // Vérifier si un rôle a le slug 'admin'
+            $hasAdminRole = $this->roles->contains('slug', 'admin');
+            if ($hasAdminRole) {
+                return true;
+            }
+
+            // Vérifier les permissions admin dans tous les rôles actifs
+            $hasAdminPermission = $this->roles
+                ->where('actif', true)
+                ->contains(function ($role) {
+                    return in_array('admin', $role->permissions ?? []);
+                });
+
+            if ($hasAdminPermission) {
+                return true;
+            }
+        } else {
+            // Si la relation n'est pas chargée, faire une requête
+            $hasAdminRole = $this->roles()->where('slug', 'admin')->exists();
+            if ($hasAdminRole) {
+                return true;
+            }
+
+            // Vérifier les permissions admin dans tous les rôles actifs
+            $hasAdminPermission = $this->roles()
+                ->where('actif', true)
+                ->get()
+                ->contains(function ($role) {
+                    return in_array('admin', $role->permissions ?? []);
+                });
+
+            if ($hasAdminPermission) {
+                return true;
+            }
         }
 
         // Compatibilité avec l'ancien système role_id
@@ -157,15 +189,11 @@ class User extends Authenticatable
             return true;
         }
 
-        // Vérifier les permissions admin dans tous les rôles
-        $hasAdminPermission = $this->roles()
-            ->where('actif', true)
-            ->get()
-            ->contains(function ($role) {
-                return in_array('admin', $role->permissions ?? []);
-            });
+        if ($this->role && in_array('admin', $this->role->permissions ?? [])) {
+            return true;
+        }
 
-        return $hasAdminPermission || ($this->role && in_array('admin', $this->role->permissions ?? []));
+        return false;
     }
 
     /**
@@ -177,20 +205,38 @@ class User extends Authenticatable
             return true; // Les admins ont toutes les permissions
         }
 
-        // Vérifier dans tous les rôles many-to-many
-        $hasPermissionInRoles = $this->roles()
-            ->where('actif', true)
-            ->get()
-            ->contains(function ($role) use ($permission) {
-                return in_array($permission, $role->permissions ?? []);
-            });
+        // Si la relation roles est déjà chargée, l'utiliser directement
+        if ($this->relationLoaded('roles')) {
+            // Vérifier dans tous les rôles actifs
+            $hasPermissionInRoles = $this->roles
+                ->where('actif', true)
+                ->contains(function ($role) use ($permission) {
+                    return in_array($permission, $role->permissions ?? []);
+                });
+
+            if ($hasPermissionInRoles) {
+                return true;
+            }
+        } else {
+            // Si la relation n'est pas chargée, faire une requête
+            $hasPermissionInRoles = $this->roles()
+                ->where('actif', true)
+                ->get()
+                ->contains(function ($role) use ($permission) {
+                    return in_array($permission, $role->permissions ?? []);
+                });
+
+            if ($hasPermissionInRoles) {
+                return true;
+            }
+        }
 
         // Compatibilité avec l'ancien système role_id
-        $hasPermissionInSingleRole = $this->role && 
-            $this->role->actif && 
-            in_array($permission, $this->role->permissions ?? []);
+        if ($this->role && $this->role->actif && in_array($permission, $this->role->permissions ?? [])) {
+            return true;
+        }
 
-        return $hasPermissionInRoles || $hasPermissionInSingleRole;
+        return false;
     }
 
     /**
@@ -200,7 +246,7 @@ class User extends Authenticatable
     {
         // Vérifier dans la relation many-to-many
         $hasRoleInManyToMany = $this->roles()->where('slug', $roleSlug)->exists();
-        
+
         // Compatibilité avec l'ancien système role_id
         $hasRoleInSingle = $this->role && $this->role->slug === $roleSlug;
 

@@ -46,7 +46,7 @@ class CotisationController extends Controller
         if ($request->has('localite_id') && $request->localite_id) {
             $membresQuery->where('localite_id', $request->localite_id);
         }
-        $membres = $membresQuery->orderBy('prenom')->get(['id', 'prenom', 'nom']);
+        $membres = $membresQuery->orderBy('nom')->orderBy('prenom')->get(['id', 'prenom', 'nom']);
 
         return Inertia::render('Cotisations/Index', [
             'cotisations' => $cotisations,
@@ -91,7 +91,7 @@ class CotisationController extends Controller
         // Si 'tous', pas de filtre supplémentaire
         
         // Paginer les membres
-        $membres = $query->orderBy('prenom')
+        $membres = $query->orderBy('nom')->orderBy('prenom')
             ->paginate(20, ['id', 'prenom', 'nom', 'telephone'])
             ->withQueryString();
         
@@ -202,7 +202,7 @@ class CotisationController extends Controller
     {
         return Inertia::render('Cotisations/Edit', [
             'cotisation' => $cotisation->load(['membre', 'modePaiement', 'statutCotisation']),
-            'membres' => Membre::orderBy('prenom')->get(['id', 'prenom', 'nom']),
+            'membres' => Membre::orderBy('nom')->orderBy('prenom')->get(['id', 'prenom', 'nom']),
             'modesPaiement' => ModePaiement::where('actif', 1)->orderBy('libelle')->get(),
             'statutsCotisation' => StatutCotisation::orderBy('libelle')->get(),
         ]);

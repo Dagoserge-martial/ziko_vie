@@ -7,7 +7,7 @@ import SecondaryButton from '@/Components/SecondaryButton.vue';
 import Swal from 'sweetalert2';
 
 const props = defineProps({
-    roles: Array,
+    roles: Object,
 });
 
 const deleteRole = (role) => {
@@ -75,7 +75,7 @@ const deleteRole = (role) => {
                             </tr>
                         </thead>
                         <tbody class="bg-white divide-y divide-gray-200">
-                            <tr v-for="role in roles" :key="role.id">
+                            <tr v-for="role in roles.data" :key="role.id">
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     <div class="text-sm font-medium text-gray-900">
                                         {{ role.nom }}
@@ -120,13 +120,72 @@ const deleteRole = (role) => {
                                     </div>
                                 </td>
                             </tr>
-                            <tr v-if="roles.length === 0">
+                            <tr v-if="!roles.data || roles.data.length === 0">
                                 <td colspan="5" class="px-6 py-4 text-center text-sm text-gray-500">
                                     Aucun rôle trouvé
                                 </td>
                             </tr>
                         </tbody>
                     </table>
+
+                    <!-- Pagination -->
+                    <div v-if="roles && roles.links && roles.links.length > 1" class="bg-white px-4 py-3 border-t border-gray-200 sm:px-6">
+                        <div class="flex items-center justify-between">
+                            <!-- Pagination mobile -->
+                            <div class="flex-1 flex justify-between sm:hidden">
+                                <Link
+                                    v-if="roles.links && roles.links[0] && roles.links[0].url"
+                                    :href="roles.links[0].url"
+                                    class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+                                >
+                                    Précédent
+                                </Link>
+                                <span v-else class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-300 bg-white cursor-not-allowed">
+                                    Précédent
+                                </span>
+                                <Link
+                                    v-if="roles.links && roles.links.length > 0 && roles.links[roles.links.length - 1] && roles.links[roles.links.length - 1].url"
+                                    :href="roles.links[roles.links.length - 1].url"
+                                    class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+                                >
+                                    Suivant
+                                </Link>
+                                <span v-else class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-300 bg-white cursor-not-allowed">
+                                    Suivant
+                                </span>
+                            </div>
+                            <!-- Pagination desktop -->
+                            <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+                                <div>
+                                    <p class="text-sm text-gray-700">
+                                        Affichage de
+                                        <span class="font-medium">{{ roles.from || 0 }}</span>
+                                        à
+                                        <span class="font-medium">{{ roles.to || 0 }}</span>
+                                        sur
+                                        <span class="font-medium">{{ roles.total || 0 }}</span>
+                                        résultats
+                                    </p>
+                                </div>
+                                <div v-if="roles.links && roles.links.length > 0">
+                                    <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                                        <Link
+                                            v-for="(link, index) in roles.links"
+                                            :key="index"
+                                            :href="link.url || '#'"
+                                            :class="{
+                                                'bg-indigo-50 border-indigo-500 text-indigo-600 z-10': link.active,
+                                                'bg-white border-gray-300 text-gray-500 hover:bg-gray-50': !link.active && link.url,
+                                                'bg-gray-100 border-gray-300 text-gray-400 cursor-not-allowed pointer-events-none': !link.url,
+                                            }"
+                                            class="relative inline-flex items-center px-4 py-2 border text-sm font-medium"
+                                            v-html="link.label"
+                                        />
+                                    </nav>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

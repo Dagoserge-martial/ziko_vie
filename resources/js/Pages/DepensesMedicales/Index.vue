@@ -3,6 +3,7 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import { Head, Link, router } from '@inertiajs/vue3';
 import PrimaryButton from '@/Components/PrimaryButton.vue';
 import InputLabel from '@/Components/InputLabel.vue';
+import MultiSelect from '@/Components/MultiSelect.vue';
 import { ref, computed, watch } from 'vue';
 
 const props = defineProps({
@@ -159,20 +160,18 @@ watch(annee, (newAnnee, oldAnnee) => {
                         </div>
                         <div>
                             <InputLabel for="membre_id" value="Membre" />
-                            <select
+                            <MultiSelect
                                 id="membre_id"
-                                v-model="searchMembre"
-                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                            >
-                                <option value="">Tous les membres</option>
-                                <option
-                                    v-for="membre in membres"
-                                    :key="membre.id"
-                                    :value="membre.id"
-                                >
-                                    {{ membre.prenom }} {{ membre.nom }}
-                                </option>
-                            </select>
+                                :model-value="searchMembre || null"
+                                @update:model-value="searchMembre = $event || ''"
+                                :options="membres"
+                                option-label="prenom"
+                                option-value="id"
+                                placeholder="Tous les membres..."
+                                search-placeholder="Rechercher un membre..."
+                                max-height="250px"
+                                :multiple="false"
+                            />
                         </div>
                         <div>
                             <InputLabel for="annee" value="Année" />

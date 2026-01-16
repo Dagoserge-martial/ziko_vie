@@ -89,10 +89,17 @@ class MembreController extends Controller
             $validated['statut'] = 0; // Actif par défaut
         }
 
-        // Créer l'utilisateur si demandé
+        // Créer l'utilisateur si demandé - seul un admin peut créer des comptes utilisateurs
         $utilisateurId = $validated['utilisateur_id'] ?? null;
         
         if ($request->boolean('est_utilisateur')) {
+            // Vérifier que l'utilisateur est admin
+            if (!$request->user()->isAdmin()) {
+                return redirect()->back()
+                    ->withErrors(['est_utilisateur' => 'Seuls les administrateurs peuvent créer des comptes utilisateurs.'])
+                    ->withInput();
+            }
+            
             $user = User::create([
                 'email' => $validated['email'],
                 'password' => $validated['password'],
@@ -197,21 +204,34 @@ class MembreController extends Controller
         $compteModifie = false;
         $compteCree = false;
         
+        // Vérifier que seul un administrateur peut modifier le mot de passe d'autres utilisateurs
+        $isAdmin = $request->user()->isAdmin();
+        
         if ($request->boolean('est_utilisateur')) {
             if ($membre->utilisateur_id) {
                 // Mettre à jour l'utilisateur existant
                 $user = User::find($membre->utilisateur_id);
                 if ($user) {
                     $user->email = $validated['email'];
-                    // Mettre à jour le mot de passe seulement si demandé
+                    // Mettre à jour le mot de passe seulement si demandé ET si l'utilisateur est admin
                     if ($request->boolean('modifier_mot_de_passe') && !empty($validated['password'])) {
+                        if (!$isAdmin) {
+                            return redirect()->back()
+                                ->withErrors(['password' => 'Seuls les administrateurs peuvent modifier le mot de passe d\'autres utilisateurs.'])
+                                ->withInput();
+                        }
                         $user->password = $validated['password'];
                     }
                     $user->save();
                     $compteModifie = true;
                 }
             } else {
-                // Créer un nouvel utilisateur
+                // Créer un nouvel utilisateur - seul un admin peut créer des comptes utilisateurs
+                if (!$isAdmin) {
+                    return redirect()->back()
+                        ->withErrors(['est_utilisateur' => 'Seuls les administrateurs peuvent créer des comptes utilisateurs.'])
+                        ->withInput();
+                }
                 if (empty($validated['password'])) {
                     return redirect()->back()
                         ->withErrors(['password' => 'Le mot de passe est obligatoire pour créer un compte utilisateur.'])
@@ -276,7 +296,7 @@ class MembreController extends Controller
             $filters['localite'] = Localite::find($request->localite_id);
         }
 
-        $membres = $query->orderBy('prenom')->get();
+        $membres = $query->orderBy('nom')->orderBy('prenom')->get();
 
         // Grouper les membres par localité
         $membresParLocalite = $membres->groupBy(function ($membre) {

@@ -1,6 +1,6 @@
 <script setup>
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
-import { Head, Link, useForm } from '@inertiajs/vue3';
+import { Head, Link, useForm, usePage } from '@inertiajs/vue3';
 import { ref, watch } from 'vue';
 import PrimaryButton from '@/Components/PrimaryButton.vue';
 import SecondaryButton from '@/Components/SecondaryButton.vue';
@@ -14,6 +14,8 @@ import { showError, showValidationErrors, validateRequired } from '@/plugins/swe
 const props = defineProps({
     localites: Array,
 });
+
+const isAdmin = usePage().props.auth.user?.isAdmin || false;
 
 const isUtilisateur = ref(false);
 
@@ -229,8 +231,8 @@ watch(
                                 </label>
                             </div>
 
-                            <!-- Est utilisateur -->
-                            <div class="flex items-start">
+                            <!-- Est utilisateur (uniquement pour les admins) -->
+                            <div v-if="isAdmin" class="flex items-start">
                                 <ToggleSwitch
                                     id="est_utilisateur"
                                     :checked="isUtilisateur"
@@ -246,6 +248,11 @@ watch(
                                         Permet au membre de se connecter à l'application
                                     </span>
                                 </label>
+                            </div>
+                            <div v-else class="flex items-center p-3 bg-gray-100 rounded-lg">
+                                <span class="text-sm text-gray-600">
+                                    Seuls les administrateurs peuvent créer des comptes utilisateurs.
+                                </span>
                             </div>
                         </div>
                         <InputError class="mt-2" :message="form.errors.statut" />

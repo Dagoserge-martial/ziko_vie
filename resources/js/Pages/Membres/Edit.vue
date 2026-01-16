@@ -1,6 +1,6 @@
 <script setup>
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
-import { Head, Link, useForm } from '@inertiajs/vue3';
+import { Head, Link, useForm, usePage } from '@inertiajs/vue3';
 import { ref, watch } from 'vue';
 import PrimaryButton from '@/Components/PrimaryButton.vue';
 import SecondaryButton from '@/Components/SecondaryButton.vue';
@@ -15,6 +15,8 @@ const props = defineProps({
     membre: Object,
     localites: Array,
 });
+
+const isAdmin = usePage().props.auth.user?.isAdmin || false;
 
 const hasAccount = ref(props.membre?.utilisateur_id ? true : false);
 const isUtilisateur = ref(props.membre?.utilisateur_id ? true : false);
@@ -243,8 +245,8 @@ watch(
                                 </label>
                             </div>
 
-                            <!-- Compte utilisateur -->
-                            <div class="flex items-start">
+                            <!-- Compte utilisateur (uniquement pour les admins) -->
+                            <div v-if="isAdmin" class="flex items-start">
                                 <ToggleSwitch
                                     id="est_utilisateur"
                                     :checked="isUtilisateur"
@@ -263,13 +265,18 @@ watch(
                                     </span>
                                 </label>
                             </div>
+                            <div v-else class="flex items-center p-3 bg-gray-100 rounded-lg">
+                                <span class="text-sm text-gray-600">
+                                    Seuls les administrateurs peuvent gérer les comptes utilisateurs.
+                                </span>
+                            </div>
                         </div>
                         <InputError class="mt-2" :message="form.errors.statut" />
                         <InputError class="mt-2" :message="form.errors.est_utilisateur" />
 
-                        <!-- Formulaire de compte utilisateur conditionnel -->
+                        <!-- Formulaire de compte utilisateur conditionnel (uniquement pour les admins) -->
                         <div
-                            v-if="isUtilisateur"
+                            v-if="isAdmin && isUtilisateur"
                             class="mt-6 p-6 bg-indigo-50 border border-indigo-200 rounded-lg space-y-4 transition-all duration-300"
                         >
                             <h3 class="text-lg font-semibold text-indigo-900 mb-4">

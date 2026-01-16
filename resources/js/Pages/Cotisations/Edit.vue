@@ -8,6 +8,7 @@ import TextInput from '@/Components/TextInput.vue';
 import InputLabel from '@/Components/InputLabel.vue';
 import InputError from '@/Components/InputError.vue';
 import Textarea from '@/Components/Textarea.vue';
+import MultiSelect from '@/Components/MultiSelect.vue';
 import { showValidationErrors, validateRequired } from '@/plugins/sweetalert';
 
 const props = defineProps({
@@ -91,21 +92,18 @@ watch(
                         <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
                             <div>
                                 <InputLabel for="membre_id" value="Membre *" />
-                                <select
+                                <MultiSelect
                                     id="membre_id"
-                                    v-model="form.membre_id"
-                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                                    required
-                                >
-                                    <option value="">Sélectionner un membre</option>
-                                    <option
-                                        v-for="membre in membres"
-                                        :key="membre.id"
-                                        :value="membre.id"
-                                    >
-                                        {{ membre.prenom }} {{ membre.nom }}
-                                    </option>
-                                </select>
+                                    :model-value="form.membre_id"
+                                    @update:model-value="form.membre_id = $event"
+                                    :options="membres"
+                                    option-label="prenom"
+                                    option-value="id"
+                                    placeholder="Sélectionner un membre..."
+                                    search-placeholder="Rechercher un membre..."
+                                    max-height="250px"
+                                    :multiple="false"
+                                />
                                 <InputError class="mt-2" :message="form.errors.membre_id" />
                             </div>
 

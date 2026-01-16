@@ -33,8 +33,16 @@ class HandleInertiaRequests extends Middleware
             ...parent::share($request),
             'auth' => [
                 'user' => $request->user() ? (function ($user) {
-                    $userArray = $user->load('membre', 'role')->toArray();
+                    $userArray = $user->load('membre', 'role', 'roles')->toArray();
                     $userArray['isAdmin'] = $user->isAdmin();
+                    // Ajouter les permissions de l'utilisateur
+                    $userArray['permissions'] = [
+                        'dashboard.view' => $user->hasPermission('dashboard.view'),
+                        'membres.view' => $user->hasPermission('membres.view'),
+                        'cotisations.view' => $user->hasPermission('cotisations.view'),
+                        'depenses.view' => $user->hasPermission('depenses.view'),
+                        'parametres.view' => $user->hasPermission('parametres.view'),
+                    ];
                     return $userArray;
                 })($request->user()) : null,
             ],

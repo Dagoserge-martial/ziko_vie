@@ -13,12 +13,12 @@ class UserRoleController extends Controller
     /**
      * Afficher la liste des utilisateurs avec leurs rôles
      */
-    public function index(): Response
+    public function index(Request $request): Response
     {
         $users = User::with(['roles', 'role', 'membre'])
             ->orderBy('email')
-            ->get()
-            ->map(function ($user) {
+            ->paginate(15)
+            ->through(function ($user) {
                 return [
                     'id' => $user->id,
                     'email' => $user->email,
@@ -29,7 +29,8 @@ class UserRoleController extends Controller
                     'est_bloque' => $user->est_bloque,
                     'membre_id' => $user->membre ? $user->membre->id : null,
                 ];
-            });
+            })
+            ->withQueryString();
 
         $roles = Role::where('actif', true)
             ->orderBy('nom')

@@ -48,7 +48,7 @@ class DepenseMedicaleController extends Controller
         if ($request->has('localite_id') && $request->localite_id) {
             $membresQuery->where('localite_id', $request->localite_id);
         }
-        $membres = $membresQuery->orderBy('prenom')->get(['id', 'prenom', 'nom', 'localite_id']);
+        $membres = $membresQuery->orderBy('nom')->orderBy('prenom')->get(['id', 'prenom', 'nom', 'localite_id']);
 
         return Inertia::render('DepensesMedicales/Index', [
             'depenses' => $depenses,
@@ -65,7 +65,7 @@ class DepenseMedicaleController extends Controller
     public function create(): Response
     {
         return Inertia::render('DepensesMedicales/Create', [
-            'membres' => Membre::orderBy('prenom')->get(['id', 'prenom', 'nom']),
+            'membres' => Membre::orderBy('nom')->orderBy('prenom')->get(['id', 'prenom', 'nom']),
             'categories' => CategorieDepense::where('actif', 1)->orderBy('libelle')->get(),
         ]);
     }
@@ -230,7 +230,7 @@ class DepenseMedicaleController extends Controller
         
         return Inertia::render('DepensesMedicales/Edit', [
             'depense' => $depense,
-            'membres' => Membre::orderBy('prenom')->get(['id', 'prenom', 'nom']),
+            'membres' => Membre::orderBy('nom')->orderBy('prenom')->get(['id', 'prenom', 'nom']),
             'categories' => CategorieDepense::where('actif', 1)->orderBy('libelle')->get(),
         ]);
     }
