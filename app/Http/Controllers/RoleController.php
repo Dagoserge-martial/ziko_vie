@@ -17,6 +17,7 @@ class RoleController extends Controller
     private function getAvailablePermissions(): array
     {
         return [
+            'admin' => 'Administrateur (toutes les permissions)',
             'membres.view' => 'Voir les membres',
             'membres.create' => 'Créer des membres',
             'membres.edit' => 'Modifier des membres',
@@ -40,7 +41,6 @@ class RoleController extends Controller
             'roles.create' => 'Créer des rôles',
             'roles.edit' => 'Modifier les rôles',
             'roles.delete' => 'Supprimer les rôles',
-            'admin' => 'Administrateur (toutes les permissions)',
         ];
     }
 

@@ -1,7 +1,7 @@
 <script setup>
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import { Head, Link, useForm } from '@inertiajs/vue3';
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import PrimaryButton from '@/Components/PrimaryButton.vue';
 import SecondaryButton from '@/Components/SecondaryButton.vue';
 import TextInput from '@/Components/TextInput.vue';
@@ -44,6 +44,28 @@ const togglePermission = (permission) => {
             ...selectedPermissions.value,
             [permission]: true,
         };
+    }
+    form.permissions = Object.keys(selectedPermissions.value);
+};
+
+const allSelected = computed(() => {
+    const perms = props.permissions || {};
+    return Object.keys(perms).length > 0 && 
+           Object.keys(perms).every(perm => selectedPermissions.value[perm]);
+});
+
+const toggleAllPermissions = () => {
+    if (allSelected.value) {
+        // Tout décocher
+        selectedPermissions.value = {};
+    } else {
+        // Tout cocher
+        const allPerms = {};
+        const perms = props.permissions || {};
+        Object.keys(perms).forEach(perm => {
+            allPerms[perm] = true;
+        });
+        selectedPermissions.value = allPerms;
     }
     form.permissions = Object.keys(selectedPermissions.value);
 };
@@ -103,21 +125,36 @@ const submit = () => {
 
                             <!-- Permissions -->
                             <div>
-                                <InputLabel value="Permissions" />
+                                <div class="flex items-center justify-between mb-2">
+                                    <InputLabel value="Permissions" />
+                                    <button
+                                        type="button"
+                                        @click="toggleAllPermissions"
+                                        class="text-sm text-indigo-600 hover:text-indigo-800 font-medium"
+                                    >
+                                        {{ allSelected ? 'Tout décocher' : 'Tout cocher' }}
+                                    </button>
+                                </div>
                                 <div class="mt-2 space-y-2 max-h-96 overflow-y-auto border border-gray-200 rounded-lg p-4">
                                     <div
-                                        v-for="(label, permission) in permissions"
+                                        v-for="(label, permission) in props.permissions"
                                         :key="permission"
-                                        class="flex items-center"
+                                        class="flex items-center p-2 rounded transition-colors"
+                                        :class="{
+                                            'bg-gray-50 border border-gray-300': !selectedPermissions[permission],
+                                            'bg-white': selectedPermissions[permission]
+                                        }"
                                     >
-                                        <Checkbox
-                                            :id="`permission-${permission}`"
-                                            :checked="!!selectedPermissions[permission]"
-                                            @update:checked="() => togglePermission(permission)"
-                                        />
+                                        <div class="relative flex-shrink-0" :class="{ 'border-2 border-gray-400 rounded p-0.5': !selectedPermissions[permission] }">
+                                            <Checkbox
+                                                :id="`permission-${permission}`"
+                                                :checked="!!selectedPermissions[permission]"
+                                                @update:checked="() => togglePermission(permission)"
+                                            />
+                                        </div>
                                         <label
                                             :for="`permission-${permission}`"
-                                            class="ms-2 text-sm text-gray-700 cursor-pointer"
+                                            class="ms-2 text-sm text-gray-700 cursor-pointer flex-1"
                                             @click="togglePermission(permission)"
                                         >
                                             {{ label }}
